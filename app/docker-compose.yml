@@ -1,0 +1,10 @@
+version: '3'
+services:
+  api:
+    # build: .  <-- COMENTE ESSA LINHA (coloque # na frente)
+    image: vault-api  # <-- ADICIONE ESSA LINHA (Usa a imagem que criamos no Passo 1)
+    container_name: cofre-seguro
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
