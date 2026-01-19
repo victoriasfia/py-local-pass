@@ -9,7 +9,8 @@ app = FastAPI (title = "Vault API", description="Cofre de senhas seguras")
 
 #inciando banco de dados
 def init_db():
-    conn = sqlite3.connect("vault.db")
+    os.makedirs("data", exist_ok=True)    
+    conn = sqlite3.connect("data/vault.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS secrets (
@@ -20,11 +21,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-    init_db()
+init_db()
 
 class SecretPayLoad(BaseModel):
     name : str
-    passwword : str
+    password : str
 
 @app.get("/")
 def home ():
@@ -41,25 +42,33 @@ def save_secret (
     x_master_key : str = Header(..., description="Sua chave mestra de criptografia")
 ):
     try:
-        f = Fernet(x_master_key())
-        token = f.encrypt(payload.password.encode())
-
-        conn = sqlite3.connect("vault.db")
+        key_bytes = x_master_key.encode() 
+        f = Fernet(key_bytes)
+        
+        pwd_bytes = payload.password.encode()
+        token = f.encrypt(pwd_bytes)
+        
+        os.makedirs("data", exist_ok=True)
+        conn = sqlite3.connect("data/vault.db")
         cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO secret (name, encrypted_content) VALUES (?,?)",
-                       (payload.name, token))
+        cursor.execute("INSERT OR REPLACE INTO secrets (name, encrypted_content) VALUES (?, ?)", 
+                    (payload.name, token))
         conn.commit()
         conn.close()
-        return {"status" : "senha salva e criptografada com sucesso!"}
+        
+        return {"status": "Senha salva e criptografada com sucesso!"}
+    
     except Exception as e:
-        raise HTTPException (status_code=400, detail =f"erro na criptografia: {str(e)}")
+        print(f"ERRO REAL: {e}") 
+        raise HTTPException(status_code=400, detail=f"Erro na criptografia: {str(e)}")
     
 @app.get("/secrets/{name}")
 def retrieve_secret(
     name: str, 
     x_master_key: str = Header(..., description="A mesma chave usada para salvar")
 ):
-    conn = sqlite3.connect("vault.db")
+    os.makedirs("data", exist_ok=True)    
+    conn = sqlite3.connect("data/vault.db")
     cursor = conn.cursor()
     cursor.execute("SELECT encrypted_content FROM secrets WHERE name = ?", (name,))
     row = cursor.fetchone()
@@ -71,9 +80,10 @@ def retrieve_secret(
     encrypted_data = row[0]
 
     try:
-        f = Fernet(x_master_key)
+        f = Fernet(x_master_key.encode)
         decrypted_password = f.decrypt(encrypted_data).decode()
         return {"service": name, "password": decrypted_password}
-    except Exception:
+    except Exception as e:
+        print(f"Erro no decrypt: {e}")
         raise HTTPException (status_code=401, detail="Chave mestra incorreta. Acesso negado!")
     
