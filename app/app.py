@@ -80,7 +80,7 @@ def retrieve_secret(
     encrypted_data = row[0]
 
     try:
-        f = Fernet(x_master_key.encode)
+        f = Fernet(x_master_key.encode())
         decrypted_password = f.decrypt(encrypted_data).decode()
         return {"service": name, "password": decrypted_password}
     except Exception as e:
