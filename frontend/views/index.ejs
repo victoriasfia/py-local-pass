@@ -3,31 +3,173 @@
 <head>
     <title>Secrets Keys</title>
     <style>
-        body { font-family: sans-serif; background: #ecf0f1; padding: 50px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ecf0f1; padding: 50px; }
         .container { max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid #3498db; }
-        h1 { color: #2c3e50; }
-        .btn-ver { background: #3498db; color: white; padding: 5px 15px; text-decoration: none; border-radius: 4px; }
-        .btn-sair { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; float: right; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .actions { display: flex; gap: 10px; }
+
+        .card { 
+            background: white; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            border-left: 5px solid #3498db; 
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-2px); }
+        h3 { margin: 0; color: #2c3e50; font-size: 1.2rem; }
+        
+        button { cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: opacity 0.3s; padding: 10px 15px; color: white;}
+        button:hover { opacity: 0.8; }
+
+        .btn-ver { background: #3498db; padding: 8px 15px; font-size: 0.9rem;}
+        .btn-novo { background: #27ae60; }
+        .btn-sair { background: #e74c3c; text-decoration: none; display: inline-block; padding: 10px 15px; border-radius: 5px; color: white; font-weight: bold;}
+        
+        .senha-revelada { font-family: monospace; font-size: 1.2rem; color: #27ae60; background-color: #e8f8f5; padding: 5px 10px; border-radius: 4px; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: white; padding: 30px; border-radius: 10px; width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .modal-box h2 { margin-top: 0; color: #2c3e50; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #7f8c8d; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; }
+        .modal-actions { text-align: right; margin-top: 20px; }
+        .btn-cancelar { background: #95a5a6; margin-right: 10px; }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/" class="btn-sair">Sair (Bloquear)</a>
-        <h1>Secrets Keys 🛡️</h1>
-        
+        <div class="header">
+            <h1>🛡️ Minhas Senhas</h1>
+            <div class="actions">
+                <button class="btn-novo" onclick="abrirModal()">➕ Adicionar Senha</button>
+                <a href="/" class="btn-sair">Sair</a>
+            </div>
+        </div>
         <% if (segredos.length === 0) { %>
-            <p>O cofre está vazio.</p>
+            <div style="text-align: center; color: #7f8c8d; margin-top: 50px;">
+                <h2>O cofre está vazio.</h2>
+                <p>Clique em "Nova Senha" para começar!</p>
+            </div>
         <% } else { %>
-            
             <% segredos.forEach(function(nome) { %>
                 <div class="card">
                     <h3><%= nome.toUpperCase() %></h3>
-                    <button class="btn-ver" onclick="alert('Funcionalidade em breve!')">Ver Senha</button>
+                    <div id="area-<%= nome %>">
+                        <button class="btn-ver" onclick="revelarSenha('<%= nome %>')">👁️ Ver Senha</button>
+                    </div>
                 </div>
             <% }); %>
-
         <% } %>
     </div>
+
+    <div id="modalNovo" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Novo Segredo 🔒</h2>
+            
+            <div class="form-group">
+                <label>Nome do Serviço (ex: Netflix)</label>
+                <input type="text" id="inputNome" placeholder="Digite">
+            </div>
+            
+            <div class="form-group">
+                <label>Senha </label>
+                <input type="text" id="inputSenha" placeholder="Digite a senha segura...">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                <button class="btn-novo" onclick="salvarSegredo()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CHAVE_MESTRA = "<%= chave %>";
+
+        function abrirModal() {
+            document.getElementById('modalNovo').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalNovo').style.display = 'none';
+            document.getElementById('inputNome').value = '';
+            document.getElementById('inputSenha').value = '';
+        }
+
+        async function salvarSegredo() {
+            const nome = document.getElementById('inputNome').value;
+            const senha = document.getElementById('inputSenha').value;
+
+            if (!nome || !senha) {
+                alert("Por favor, preencha todos os campos!");
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/secrets', {
+                    method: 'POST',
+                    headers: {
+                        'x-master-key': CHAVE_MESTRA,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: nome,
+                        password: senha
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Sucesso! Senha guardada.");
+                    fecharModal();
+                    location.reload(); 
+                } else {
+                    const erro = await response.json();
+                    alert("Erro ao salvar: " + erro.detail);
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro de conexão com o Python.");
+            }
+        }
+
+        async function revelarSenha(nomeDoSegredo) {
+            const areaElement = document.getElementById(`area-${nomeDoSegredo}`);
+            areaElement.innerHTML = '<span style="color: grey;">Buscando... ⏳</span>';
+
+            try {
+                const response = await fetch(`http://localhost:8000/secrets/${nomeDoSegredo}`, {
+                    method: 'GET',
+                    headers: { 'x-master-key': CHAVE_MESTRA, 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                
+                areaElement.innerHTML = `
+                    <span class="senha-revelada">${data.password}</span>
+                    <small style="cursor: pointer; color: #95a5a6; margin-left: 10px;" onclick="location.reload()">Esconder</small>
+                `;
+            } catch (error) {
+                areaElement.innerHTML = '<span style="color: red;">Erro!</span>';
+            }
+        }
+    </script>
 </body>
 </html>
