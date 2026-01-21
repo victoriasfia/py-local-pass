@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secrets Keys</title>
+    <style>
+        body { font-family: sans-serif; background: #ecf0f1; padding: 50px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid #3498db; }
+        h1 { color: #2c3e50; }
+        .btn-ver { background: #3498db; color: white; padding: 5px 15px; text-decoration: none; border-radius: 4px; }
+        .btn-sair { background: #e74c3c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; float: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="btn-sair">Sair (Bloquear)</a>
+        <h1>Secrets Keys 🛡️</h1>
+        
+        <% if (segredos.length === 0) { %>
+            <p>O cofre está vazio.</p>
+        <% } else { %>
+            
+            <% segredos.forEach(function(nome) { %>
+                <div class="card">
+                    <h3><%= nome.toUpperCase() %></h3>
+                    <button class="btn-ver" onclick="alert('Funcionalidade em breve!')">Ver Senha</button>
+                </div>
+            <% }); %>
+
+        <% } %>
+    </div>
+</body>
+</html>
