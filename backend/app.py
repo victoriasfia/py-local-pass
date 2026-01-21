@@ -117,7 +117,7 @@ def delete_secret(name: str):
         conn.close()
         raise HTTPException (status_cod=404, detail="Senha secreta não econtrada")
     
-    cursor.execute("DELETE FROM secrets WHERE name?", (name,))
+    cursor.execute("DELETE FROM secrets WHERE name = ?", (name,))
     conn.commit()
     conn.close()
 
