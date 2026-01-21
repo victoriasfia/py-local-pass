@@ -22,13 +22,17 @@
             transition: transform 0.2s;
         }
         .card:hover { transform: translateY(-2px); }
+        
+        .card-content { display: flex; align-items: center; gap: 15px; width: 100%; justify-content: space-between; }
         h3 { margin: 0; color: #2c3e50; font-size: 1.2rem; }
         
-        button { cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: opacity 0.3s; padding: 10px 15px; color: white;}
+        button { cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: opacity 0.3s; padding: 8px 12px; color: white; display: inline-flex; align-items: center; justify-content: center;}
         button:hover { opacity: 0.8; }
 
-        .btn-ver { background: #3498db; padding: 8px 15px; font-size: 0.9rem;}
-        .btn-novo { background: #27ae60; }
+        .btn-ver { background: #3498db; margin-right: 5px; }
+        .btn-novo { background: #27ae60; padding: 10px 20px; font-size: 1rem;} 
+        .btn-editar { background: #f39c12; margin-right: 5px; } /* Laranja */
+        .btn-excluir { background: #e74c3c; } /* Vermelho */
         .btn-sair { background: #e74c3c; text-decoration: none; display: inline-block; padding: 10px 15px; border-radius: 5px; color: white; font-weight: bold;}
         
         .senha-revelada { font-family: monospace; font-size: 1.2rem; color: #27ae60; background-color: #e8f8f5; padding: 5px 10px; border-radius: 4px; }
@@ -38,6 +42,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
             justify-content: center; align-items: center;
+            z-index: 1000;
         }
         .modal-box {
             background: white; padding: 30px; border-radius: 10px; width: 400px;
@@ -47,6 +52,8 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #7f8c8d; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; }
+        .form-group input:disabled { background: #ecf0f1; cursor: not-allowed; }
+        
         .modal-actions { text-align: right; margin-top: 20px; }
         .btn-cancelar { background: #95a5a6; margin-right: 10px; }
 
@@ -57,10 +64,11 @@
         <div class="header">
             <h1>🛡️ Minhas Senhas</h1>
             <div class="actions">
-                <button class="btn-novo" onclick="abrirModal()">➕ Adicionar Senha</button>
+                <button class="btn-novo" onclick="abrirModalNovo()">➕ Adicionar Senha</button>
                 <a href="/" class="btn-sair">Sair</a>
             </div>
         </div>
+        
         <% if (segredos.length === 0) { %>
             <div style="text-align: center; color: #7f8c8d; margin-top: 50px;">
                 <h2>O cofre está vazio.</h2>
@@ -69,9 +77,18 @@
         <% } else { %>
             <% segredos.forEach(function(nome) { %>
                 <div class="card">
-                    <h3><%= nome.toUpperCase() %></h3>
-                    <div id="area-<%= nome %>">
-                        <button class="btn-ver" onclick="revelarSenha('<%= nome %>')">👁️ Ver Senha</button>
+                    <div class="card-content">
+                        <div>
+                            <h3><%= nome.toUpperCase() %></h3>
+                            <div id="area-<%= nome %>" style="margin-top: 5px;">
+                                </div>
+                        </div>
+
+                        <div style="display: flex;">
+                            <button class="btn-ver" title="Ver Senha" onclick="revelarSenha('<%= nome %>')">👁️</button>
+                            <button class="btn-editar" title="Alterar Senha" onclick="abrirModalEditar('<%= nome %>')">✏️</button>
+                            <button class="btn-excluir" title="Excluir" onclick="excluirSegredo('<%= nome %>')">🗑️</button>
+                        </div>
                     </div>
                 </div>
             <% }); %>
@@ -80,15 +97,15 @@
 
     <div id="modalNovo" class="modal-overlay">
         <div class="modal-box">
-            <h2>Novo Segredo 🔒</h2>
+            <h2 id="tituloModal">Novo Segredo 🔒</h2>
             
             <div class="form-group">
-                <label>Nome do Serviço (ex: Netflix)</label>
-                <input type="text" id="inputNome" placeholder="Digite">
+                <label>Nome do Serviço</label>
+                <input type="text" id="inputNome" placeholder="Ex: netflix">
             </div>
             
             <div class="form-group">
-                <label>Senha </label>
+                <label>Senha</label>
                 <input type="text" id="inputSenha" placeholder="Digite a senha segura...">
             </div>
 
@@ -102,14 +119,31 @@
     <script>
         const CHAVE_MESTRA = "<%= chave %>";
 
-        function abrirModal() {
+        function abrirModalNovo() {
             document.getElementById('modalNovo').style.display = 'flex';
+            document.getElementById('tituloModal').innerText = "Novo Segredo 🔒";
+            
+            const campoNome = document.getElementById('inputNome');
+            campoNome.value = '';
+            campoNome.disabled = false;
+            
+            document.getElementById('inputSenha').value = '';
+        }
+
+        function abrirModalEditar(nomeAtual) {
+            document.getElementById('modalNovo').style.display = 'flex';
+            document.getElementById('tituloModal').innerText = "Alterar Senha ✏️";
+            
+            const campoNome = document.getElementById('inputNome');
+            campoNome.value = nomeAtual;
+            campoNome.disabled = true;
+            
+            document.getElementById('inputSenha').value = ''; 
+            document.getElementById('inputSenha').focus();
         }
 
         function fecharModal() {
             document.getElementById('modalNovo').style.display = 'none';
-            document.getElementById('inputNome').value = '';
-            document.getElementById('inputSenha').value = '';
         }
 
         async function salvarSegredo() {
@@ -128,30 +162,33 @@
                         'x-master-key': CHAVE_MESTRA,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        name: nome,
-                        password: senha
-                    })
+                    body: JSON.stringify({ name: nome, password: senha })
                 });
 
                 if (response.ok) {
-                    alert("Sucesso! Senha guardada.");
-                    fecharModal();
+                    alert("Salvo com sucesso!");
                     location.reload(); 
                 } else {
                     const erro = await response.json();
-                    alert("Erro ao salvar: " + erro.detail);
+                    alert("Erro: " + erro.detail);
                 }
-
             } catch (error) {
                 console.error(error);
-                alert("Erro de conexão com o Python.");
+                alert("Erro de conexão.");
             }
         }
 
+        // --- Revelar Senha ---
         async function revelarSenha(nomeDoSegredo) {
             const areaElement = document.getElementById(`area-${nomeDoSegredo}`);
-            areaElement.innerHTML = '<span style="color: grey;">Buscando... ⏳</span>';
+            
+            // Se já estiver visível, esconde
+            if (areaElement.innerHTML.includes('senha-revelada')) {
+                areaElement.innerHTML = '';
+                return;
+            }
+
+            areaElement.innerHTML = '<span style="color: grey; font-size: 0.9rem;">Buscando...</span>';
 
             try {
                 const response = await fetch(`http://localhost:8000/secrets/${nomeDoSegredo}`, {
@@ -162,12 +199,35 @@
                 if (!response.ok) throw new Error();
                 const data = await response.json();
                 
-                areaElement.innerHTML = `
-                    <span class="senha-revelada">${data.password}</span>
-                    <small style="cursor: pointer; color: #95a5a6; margin-left: 10px;" onclick="location.reload()">Esconder</small>
-                `;
+                areaElement.innerHTML = `<span class="senha-revelada">${data.password}</span>`;
             } catch (error) {
                 areaElement.innerHTML = '<span style="color: red;">Erro!</span>';
+            }
+        }
+
+        // --- Excluir Senha ---
+        async function excluirSegredo(nome) {
+            // Pergunta de segurança
+            if (!confirm(`Tem certeza que deseja apagar a senha do ${nome.toUpperCase()}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/secrets/${nome}`, {
+                    method: 'DELETE', 
+                    headers: { 'x-master-key': CHAVE_MESTRA } 
+                });
+
+                if (response.ok) {
+                    alert("Apagado com sucesso!");
+                    location.reload();
+                } else {
+                    alert("Erro ao apagar.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro de conexão.");
             }
         }
     </script>
