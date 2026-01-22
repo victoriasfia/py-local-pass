@@ -1,6 +1,5 @@
 # 🛡️ Cofre de Senhas (Secrets Vault)
-Um gerenciador de senhas Full Stack simples e seguro, desenvolvido para praticar conceitos de APIs REST, Containerização e Criptografia.
-
+Um gerenciador de senhas Full Stack simples, desenvolvido apenas para praticar conceitos de APIs REST e Containerização.
 O projeto utiliza uma arquitetura de microsserviços, separando a lógica de segurança (Python) da interface do usuário (Node.js).
 
 ## 🚀 Tecnologias Utilizadas
