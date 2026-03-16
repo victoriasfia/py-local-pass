@@ -27,9 +27,6 @@ app.post('/dashboard', async (req, res) => {
                 'x-master-key': chaveMestra
             }
         });
-
-        // Se deu certo, renderiza a página index com os segredos e manda a chave junto
-        // (para podermos usar ela depois para ver as senhas)
         res.render('index', { 
             segredos: response.data.secrets, 
             chave: chaveMestra 
